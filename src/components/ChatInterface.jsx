@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import {
   Box,
-  Input,
+  Textarea,
   InputGroup,
   InputRightElement,
   IconButton,
@@ -21,14 +21,38 @@ import {
   CheckIcon,
 } from "@chakra-ui/icons";
 import ReactMarkdown from "react-markdown";
+import ResizeTextarea from "react-textarea-autosize";
 
 // --- GLOBAL MARKDOWN STYLING ---
 const MarkdownStyles = {
-  p: (props) => <Text mb={2} lineHeight="tall" {...props} />,
-  ul: (props) => <Box as="ul" ml={6} mb={2} {...props} />,
-  li: (props) => <Box as="li" mb={1} {...props} />,
-  h1: (props) => <Text fontSize="xl" fontWeight="bold" mb={2} {...props} />,
-  h2: (props) => <Text fontSize="lg" fontWeight="bold" mb={2} {...props} />,
+  p: (props) => (
+    <Text
+      mb={2}
+      lineHeight="tall"
+      fontSize={{ base: "sm", md: "md" }}
+      {...props}
+    />
+  ),
+  ul: (props) => <Box as="ul" ml={4} mb={2} {...props} />,
+  li: (props) => (
+    <Box as="li" mb={1} fontSize={{ base: "sm", md: "md" }} {...props} />
+  ),
+  h1: (props) => (
+    <Text
+      fontSize={{ base: "lg", md: "xl" }}
+      fontWeight="bold"
+      mb={2}
+      {...props}
+    />
+  ),
+  h2: (props) => (
+    <Text
+      fontSize={{ base: "md", md: "lg" }}
+      fontWeight="bold"
+      mb={2}
+      {...props}
+    />
+  ),
   code: (props) => (
     <Box
       as="code"
@@ -36,7 +60,7 @@ const MarkdownStyles = {
       bg="gray.800"
       color="orange.200"
       borderRadius="md"
-      fontSize="sm"
+      fontSize="xs"
       display="block"
       whiteSpace="pre-wrap"
       my={2}
@@ -82,6 +106,7 @@ const ChatInterface = ({
 
   const ChatBubble = ({ q, a, isPro, isLast }) => (
     <VStack spacing={4} align="stretch" w="full">
+      {/* USER BUBBLE */}
       <Flex justify="flex-end">
         <Box
           bg={userBubbleBg}
@@ -89,15 +114,16 @@ const ChatInterface = ({
           py={3}
           borderRadius="2xl"
           borderBottomRightRadius="none"
-          maxW="80%"
+          maxW={{ base: "90%", md: "80%" }}
           boxShadow="sm"
         >
-          <Text fontSize="md" color={textColor}>
+          <Text fontSize={{ base: "sm", md: "md" }} color={textColor}>
             {q}
           </Text>
         </Box>
       </Flex>
 
+      {/* AI BUBBLE */}
       <Flex justify="flex-start">
         <Box
           bg={isPro ? aiProBg : aiStandardBg}
@@ -107,7 +133,7 @@ const ChatInterface = ({
           py={3}
           borderRadius="2xl"
           borderBottomLeftRadius="none"
-          maxW="85%"
+          maxW={{ base: "95%", md: "85%" }}
           boxShadow={isPro ? "lg" : "sm"}
         >
           {isPro && (
@@ -116,7 +142,7 @@ const ChatInterface = ({
             </Badge>
           )}
 
-          <Box color={textColor} fontSize="md">
+          <Box color={textColor}>
             <ReactMarkdown components={MarkdownStyles}>{a}</ReactMarkdown>
           </Box>
 
@@ -144,13 +170,21 @@ const ChatInterface = ({
   );
 
   return (
-    <Flex direction="column" h="full" maxW="900px" mx="auto" p={6}>
-      <Flex justify="center" gap={4} mb={6}>
+    <Flex
+      direction="column"
+      h="full"
+      maxW="900px"
+      mx="auto"
+      p={{ base: 3, md: 6 }} 
+    >
+      {/* TIER TABS */}
+      <Flex justify="center" gap={2} mb={4}>
         <Badge
-          px={4}
+          px={{ base: 2, md: 4 }}
           py={1}
           borderRadius="full"
           cursor="pointer"
+          fontSize={{ base: "10px", md: "xs" }}
           variant={tier === "free" ? "solid" : "outline"}
           colorScheme="blue"
           onClick={() => setTier("free")}
@@ -158,10 +192,11 @@ const ChatInterface = ({
           Standard
         </Badge>
         <Badge
-          px={4}
+          px={{ base: 2, md: 4 }}
           py={1}
           borderRadius="full"
           cursor="pointer"
+          fontSize={{ base: "10px", md: "xs" }}
           variant={tier === "pro" ? "solid" : "outline"}
           colorScheme="orange"
           onClick={() => setTier("pro")}
@@ -170,12 +205,14 @@ const ChatInterface = ({
         </Badge>
       </Flex>
 
+      {/* CHAT BOX */}
       <Box
         flex={1}
         overflowY="auto"
-        maxH="calc(100vh - 280px)"
-        mb={6}
-        p={4}
+        className="custom-scroll"
+        maxH="calc(100vh - 200px)" 
+        mb={4}
+        p={{ base: 2, md: 4 }}
         bg={bgColor}
         borderRadius="xl"
       >
@@ -188,7 +225,7 @@ const ChatInterface = ({
               h="200px"
               opacity={0.6}
             >
-              <Text fontSize="lg" fontWeight="medium">
+              <Text fontSize="md" fontWeight="medium">
                 Welcome, Researcher.
               </Text>
             </Flex>
@@ -219,8 +256,8 @@ const ChatInterface = ({
                 size="sm"
                 color={tier === "pro" ? "orange.400" : "blue.500"}
               />
-              <Text fontSize="sm" color="gray.500">
-                Connecting to Groq Stream...
+              <Text fontSize="xs" color="gray.500">
+                Connecting to Groq...
               </Text>
             </HStack>
           )}
@@ -228,22 +265,29 @@ const ChatInterface = ({
         </VStack>
       </Box>
 
-      <Box position="relative">
+      {/* INPUT SECTION: */}
+      <Box position="relative" pb={2}>
         <InputGroup size="lg">
-          <Input
-            pr="4rem"
+          <Textarea
+            as={ResizeTextarea}
+            minH="50px"
+            maxH="150px"
+            resize="none"
+            pr="3.5rem"
+            fontSize={{ base: "sm", md: "md" }}
             placeholder="Ask anything..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
             bg={bgColor}
-            borderRadius="2xl"
-            height="60px"
-            boxShadow="2xl"
+            borderRadius="xl"
+            boxShadow="lg"
+            pt={3}
           />
-          <InputRightElement width="4rem" height="60px">
+          <InputRightElement width="3.5rem" height="100%" alignItems="center">
             <IconButton
-              icon={<ArrowUpIcon w={6} h={6} />}
+              size="sm"
+              icon={<ArrowUpIcon w={5} h={5} />}
               colorScheme={tier === "pro" ? "orange" : "blue"}
               onClick={onSend}
               isDisabled={!question.trim() || loading}

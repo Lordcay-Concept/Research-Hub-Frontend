@@ -15,6 +15,7 @@ import {
   Button,
   HStack,
   VStack,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { HamburgerIcon, AddIcon } from "@chakra-ui/icons";
 
@@ -41,7 +42,13 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
 
   // --- UI & NAVIGATION STATE ---
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const [isSidebarOpen, setSidebarOpen] = useState(!isMobile);
+
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
+
   const [currentView, setCurrentView] = useState("chat");
   const [liveLocation, setLiveLocation] = useState("Abuja, Nigeria");
 
@@ -102,12 +109,14 @@ function App() {
     setQuestion("");
     setLiveAnswer("");
     setCurrentView("chat");
+    if (isMobile) setSidebarOpen(false); 
   };
 
   const handleHistoryClick = async (item) => {
     setCurrentView("chat");
     setCurrentChatId(item.chatId);
     setLiveAnswer("");
+    if (isMobile) setSidebarOpen(false); 
 
     if (isLoggedIn) {
       try {
@@ -290,7 +299,13 @@ function App() {
         )
       ) : (
         <Flex h="100vh" w="100vw" bg={globalBg} overflow="hidden">
-          {isSidebarOpen && (
+          <Box
+            display={isSidebarOpen ? "block" : "none"}
+            position={isMobile ? "absolute" : "relative"}
+            zIndex={isMobile ? "100" : "1"}
+            h="100%"
+            bg={globalBg}
+          >
             <Sidebar
               history={history}
               onNewResearch={handleNewResearch}
@@ -299,10 +314,11 @@ function App() {
               location={liveLocation}
               isLoggedIn={isLoggedIn}
               onLoginOpen={() => setShowAuthView(true)}
+              onClose={() => isMobile && setSidebarOpen(false)}
             />
-          )}
+          </Box>
 
-          <Flex flex={1} direction="column">
+          <Flex flex={1} direction="column" w="100%">
             <Flex
               align="center"
               justify="space-between"
@@ -318,6 +334,7 @@ function App() {
                   onClick={() => setSidebarOpen(!isSidebarOpen)}
                   size="sm"
                   mr={2}
+                  aria-label="Toggle Sidebar"
                 />
                 <Header />
               </Flex>

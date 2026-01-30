@@ -11,6 +11,7 @@ import {
   HStack,
   IconButton,
   Input,
+  Spacer,
 } from "@chakra-ui/react";
 import {
   SettingsIcon,
@@ -35,6 +36,7 @@ const Sidebar = ({
   location,
   isLoggedIn,
   onLoginOpen,
+  onClose: onSidebarClose, 
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -97,7 +99,7 @@ const Sidebar = ({
 
   return (
     <Flex
-      w="260px"
+      w={{ base: "280px", md: "260px" }} 
       direction="column"
       bg={sidebarBg}
       h="100vh"
@@ -105,6 +107,21 @@ const Sidebar = ({
       borderColor={borderColor}
       p={4}
     >
+      {/* MOBILE HEADER */}
+      <HStack display={{ base: "flex", md: "none" }} mb={4}>
+        <Text fontSize="xs" fontWeight="bold" color="gray.500">
+          RESEARCH HUB
+        </Text>
+        <Spacer />
+        <IconButton
+          size="sm"
+          variant="ghost"
+          icon={<CloseIcon fontSize="10px" />}
+          onClick={onSidebarClose}
+          aria-label="Close Sidebar"
+        />
+      </HStack>
+
       <Button
         colorScheme="blue"
         variant="outline"
@@ -206,7 +223,7 @@ const Sidebar = ({
                   {isLoggedIn && (
                     <HStack
                       spacing={1}
-                      display="none"
+                      display={{ base: "flex", md: "none" }}
                       _groupHover={{ display: "flex" }}
                     >
                       <IconButton
