@@ -135,7 +135,7 @@ function App() {
 
     setLoading(true);
     setQuestion("");
-    setLiveAnswer("");
+    setLiveAnswer("Connecting to Research Hub Stream");
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/ask`, {
@@ -169,6 +169,9 @@ function App() {
             try {
               const data = JSON.parse(line.substring(6));
               if (data.content) {
+                if (accumulatedAnswer === "") {
+                  setLiveAnswer("");
+                }
                 accumulatedAnswer += data.content;
                 setLiveAnswer(accumulatedAnswer);
               }
