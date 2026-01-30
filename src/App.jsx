@@ -31,7 +31,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ProfilePage from "./components/ProfilePage";
 
-function AppContent() {
+function App() {
   // --- AUTH & USER STATE ---
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [currentUser, setCurrentUser] = useState(
@@ -61,7 +61,7 @@ function AppContent() {
   const globalBg = useColorModeValue("white", "#1e1e1e");
   const borderColor = useColorModeValue("gray.100", "gray.700");
 
-  // --- RESPONSIVE HANDLER ---
+  // --- WINDOW RESIZE HANDLER ---
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -110,7 +110,7 @@ function AppContent() {
     }
   }, []);
 
-  // --- CHAT HANDLERS ---
+  // --- HANDLERS ---
   const handleNewResearch = () => {
     setCurrentChatId(null);
     setActiveThread([]);
@@ -139,7 +139,7 @@ function AppContent() {
         const fullThread = await res.json();
         setActiveThread(fullThread);
       } catch (e) {
-        console.error("Thread fetch error:", e);
+        console.error(e);
       }
     }
   };
@@ -160,7 +160,7 @@ function AppContent() {
     ]);
     setLoading(true);
     setQuestion("");
-    setLiveAnswer("Connecting to Research Hub Stream...");
+    setLiveAnswer("Connecting...");
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/ask`, {
@@ -178,11 +178,9 @@ function AppContent() {
           tier,
         }),
       });
-
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedAnswer = "";
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -212,14 +210,14 @@ function AppContent() {
       if (!currentChatId) setCurrentChatId(activeChatId);
       fetchHistorySummaries();
     } catch (err) {
-      setLiveAnswer("Error connecting to server.");
+      setLiveAnswer("Error.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleClearHistory = async () => {
-    if (!window.confirm("Delete all research history?")) return;
+    if (!window.confirm("Delete all history?")) return;
     if (isLoggedIn) {
       await fetch(`${API_BASE_URL}/api/v1/history`, {
         method: "DELETE",
@@ -231,7 +229,6 @@ function AppContent() {
     setCurrentChatId(null);
   };
 
-  // --- AUTH & ACCOUNT SWITCHING ---
   const handleLoginSuccess = (userData) => {
     const updated = [
       ...allAccounts.filter((a) => a.email !== userData.email),
@@ -253,7 +250,6 @@ function AppContent() {
     setCurrentView("chat");
     setActiveThread([]);
     setCurrentChatId(null);
-    setLiveAnswer("");
   };
 
   const handleLogout = () => {
@@ -267,11 +263,10 @@ function AppContent() {
       setIsLoggedIn(false);
       setCurrentUser(null);
       setHistory([]);
-      setCurrentView("chat");
     }
   };
 
-  const SidebarContent = (
+  const sidebarContent = (
     <Sidebar
       history={history}
       onNewResearch={handleNewResearch}
@@ -285,166 +280,148 @@ function AppContent() {
   );
 
   return (
-    <Flex h="100vh" w="100vw" bg={globalBg} overflow="hidden">
-      {showAuthView ? (
-        showSignup ? (
-          <Signup
-            onFlip={() => setShowSignup(false)}
-            onSignupSuccess={() => setShowSignup(false)}
-          />
+    <ChakraProvider>
+      <Flex h="100vh" w="100vw" bg={globalBg} overflow="hidden">
+        {showAuthView ? (
+          showSignup ? (
+            <Signup
+              onFlip={() => setShowSignup(false)}
+              onSignupSuccess={() => setShowSignup(false)}
+            />
+          ) : (
+            <Login
+              onLoginSuccess={handleLoginSuccess}
+              onFlip={() => setShowSignup(true)}
+              onCancel={() => setShowAuthView(false)}
+            />
+          )
         ) : (
-          <Login
-            onLoginSuccess={handleLoginSuccess}
-            onFlip={() => setShowSignup(true)}
-            onCancel={() => setShowAuthView(false)}
-          />
-        )
-      ) : (
-        <>
-          {/* Desktop Sidebar */}
-          {!isMobile && (
-            <Box w="260px" borderRight="1px" borderColor={borderColor}>
-              {SidebarContent}
-            </Box>
-          )}
+          <>
+            {!isMobile && (
+              <Box w="260px" borderRight="1px" borderColor={borderColor}>
+                {sidebarContent}
+              </Box>
+            )}
+            {isMobile && (
+              <Drawer
+                isOpen={isSidebarOpen}
+                placement="left"
+                onClose={() => setSidebarOpen(false)}
+              >
+                <DrawerOverlay />
+                <DrawerContent maxW="280px">{sidebarContent}</DrawerContent>
+              </Drawer>
+            )}
 
-          {/* Mobile Sidebar */}
-          {isMobile && (
-            <Drawer
-              isOpen={isSidebarOpen}
-              placement="left"
-              onClose={() => setSidebarOpen(false)}
-            >
-              <DrawerOverlay />
-              <DrawerContent maxW="280px">{SidebarContent}</DrawerContent>
-            </Drawer>
-          )}
-
-          <Flex flex={1} direction="column" w="100%" overflow="hidden">
-            <Flex
-              align="center"
-              justify="space-between"
-              borderBottom="1px"
-              borderColor={borderColor}
-              p={2}
-              bg={globalBg}
-            >
-              <Flex align="center">
-                <IconButton
-                  icon={<HamburgerIcon />}
-                  variant="ghost"
-                  onClick={() => setSidebarOpen(true)}
-                  size="sm"
-                  mr={2}
-                  aria-label="Menu"
-                />
-                <Header />
+            <Flex flex={1} direction="column" w="100%" overflow="hidden">
+              <Flex
+                align="center"
+                justify="space-between"
+                borderBottom="1px"
+                borderColor={borderColor}
+                p={2}
+                bg={globalBg}
+              >
+                <Flex align="center">
+                  <IconButton
+                    icon={<HamburgerIcon />}
+                    variant="ghost"
+                    onClick={() => setSidebarOpen(true)}
+                    size="sm"
+                    mr={2}
+                    aria-label="Menu"
+                  />
+                  <Header />
+                </Flex>
+                <Box mr={2}>
+                  <Menu>
+                    <MenuButton
+                      as={Button}
+                      rounded="full"
+                      variant="link"
+                      minW={0}
+                    >
+                      <Avatar
+                        size="xs"
+                        name={currentUser?.name}
+                        src={currentUser?.profilePic}
+                        bg="blue.500"
+                      />
+                    </MenuButton>
+                    <MenuList zIndex="1000">
+                      <Box px={4} py={2}>
+                        <Text fontWeight="bold" fontSize="sm">
+                          {currentUser?.name || "Guest"}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500">
+                          {currentUser?.email || "No email"}
+                        </Text>
+                      </Box>
+                      <MenuDivider />
+                      {allAccounts
+                        .filter((acc) => acc.email !== currentUser?.email)
+                        .map((acc) => (
+                          <MenuItem
+                            key={acc.email}
+                            onClick={() => switchAccount(acc)}
+                          >
+                            <HStack>
+                              <Avatar
+                                size="xs"
+                                name={acc.name}
+                                src={acc.profilePic}
+                              />
+                              <Text fontSize="xs">{acc.name}</Text>
+                            </HStack>
+                          </MenuItem>
+                        ))}
+                      <MenuItem
+                        icon={<AddIcon />}
+                        onClick={() => {
+                          setShowAuthView(true);
+                          setShowSignup(false);
+                        }}
+                      >
+                        Add account
+                      </MenuItem>
+                      <MenuDivider />
+                      <MenuItem onClick={() => setCurrentView("profile")}>
+                        My Profile
+                      </MenuItem>
+                      <MenuItem onClick={handleLogout} color="red.500">
+                        Sign out
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+                </Box>
               </Flex>
 
-              <Box mr={2}>
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    rounded="full"
-                    variant="link"
-                    minW={0}
-                  >
-                    <Avatar
-                      size="xs"
-                      name={currentUser?.name}
-                      src={currentUser?.profilePic}
-                      bg="blue.500"
-                      color="white"
-                    />
-                  </MenuButton>
-                  <MenuList zIndex="1000">
-                    <Box px={4} py={2}>
-                      <Text fontWeight="bold" fontSize="sm">
-                        {currentUser?.name || "Guest User"}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {currentUser?.email || "No email linked"}
-                      </Text>
-                    </Box>
-                    <MenuDivider />
-                    {allAccounts
-                      .filter((acc) => acc.email !== currentUser?.email)
-                      .map((acc) => (
-                        <MenuItem
-                          key={acc.email}
-                          onClick={() => switchAccount(acc)}
-                        >
-                          <HStack>
-                            <Avatar
-                              size="xs"
-                              name={acc.name}
-                              src={acc.profilePic}
-                            />
-                            <VStack align="start" spacing={0}>
-                              <Text fontSize="xs" fontWeight="medium">
-                                {acc.name}
-                              </Text>
-                              <Text fontSize="10px" color="gray.500">
-                                {acc.email}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        </MenuItem>
-                      ))}
-                    <MenuItem
-                      icon={<AddIcon />}
-                      onClick={() => {
-                        setShowAuthView(true);
-                        setShowSignup(false);
-                      }}
-                    >
-                      Add another account
-                    </MenuItem>
-                    <MenuDivider />
-                    <MenuItem onClick={() => setCurrentView("profile")}>
-                      My Profile
-                    </MenuItem>
-                    <MenuDivider />
-                    <MenuItem onClick={handleLogout} color="red.500">
-                      Sign out
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
+              <Box flex={1} overflowY="auto">
+                {currentView === "profile" ? (
+                  <ProfilePage
+                    user={currentUser}
+                    setCurrentUser={setCurrentUser}
+                    onBack={() => setCurrentView("chat")}
+                  />
+                ) : (
+                  <ChatInterface
+                    thread={activeThread}
+                    question={question}
+                    setQuestion={setQuestion}
+                    answer={liveAnswer}
+                    loading={loading}
+                    onSend={handleSearch}
+                    tier={tier}
+                    setTier={setTier}
+                  />
+                )}
               </Box>
             </Flex>
-
-            <Box flex={1} overflowY="auto">
-              {currentView === "profile" ? (
-                <ProfilePage
-                  user={currentUser}
-                  setCurrentUser={setCurrentUser}
-                  onBack={() => setCurrentView("chat")}
-                />
-              ) : (
-                <ChatInterface
-                  thread={activeThread}
-                  question={question}
-                  setQuestion={setQuestion}
-                  answer={liveAnswer}
-                  loading={loading}
-                  onSend={handleSearch}
-                  tier={tier}
-                  setTier={setTier}
-                />
-              )}
-            </Box>
-          </Flex>
-        </>
-      )}
-    </Flex>
-  );
-}
-
-// THE WRAPPER THAT FIXES THE CRASH
-export default function App() {
-  return (
-    <ChakraProvider>
-      <AppContent />
+          </>
+        )}
+      </Flex>
     </ChakraProvider>
   );
 }
+
+export default App;
